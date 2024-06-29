@@ -21,6 +21,14 @@ export class UserService {
     return newUser.save();
   }
 
+  async findByEmail(email: string): Promise<User | undefined> {
+    return this.userModel.findOne({ email }).exec();
+  }
+
+  async findOneById(id: string): Promise<User | undefined> {
+    return this.userModel.findById(id).exec();
+  }
+
   findAll() {
     return `This action returns all user`;
   }
