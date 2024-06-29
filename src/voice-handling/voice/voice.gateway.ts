@@ -1,32 +1,78 @@
-import { WebSocketGateway, SubscribeMessage, WebSocketServer, ConnectedSocket, MessageBody } from '@nestjs/websockets';
-import { Socket, Server } from 'socket.io';
 import {
+  ConnectedSocket,
+  MessageBody,
   OnGatewayConnection,
-  OnGatewayDisconnect,
+  OnGatewayInit,
+  SubscribeMessage,
+  WebSocketGateway,
+  WebSocketServer,
 } from '@nestjs/websockets';
+import { Server, Socket } from 'socket.io';
 
 @WebSocketGateway({
   cors: {
     origin: '*',
   },
 })
-export class VoiceGateway {
+@WebSocketGateway()
+export class VoiceGateway implements OnGatewayInit, OnGatewayConnection {
   @WebSocketServer() server: Server;
 
-  @SubscribeMessage('joinCall')
-  handleJoinCall(@ConnectedSocket() client: Socket, @MessageBody() data: { roomId: string }): void {
-    client.join(data.roomId);
-    console.log(`Client ${client.id} joined room ${data.roomId}`);
+  afterInit() {
+    console.log('WebSocket initialized');
   }
 
-  @SubscribeMessage('leaveCall')
-  handleLeaveCall(@ConnectedSocket() client: Socket, @MessageBody() data: { roomId: string }): void {
-    client.leave(data.roomId);
-    console.log(`Client ${client.id} left room ${data.roomId}`);
+  handleConnection(client: Socket) {
+    if (client.handshake.query) {
+      const callerId = client.handshake.query.callerId;
+      client.join(callerId);
+      client.emit('message', { some: 'abs' });
+      console.log(`${callerId} connected`);
+    }
   }
 
-  @SubscribeMessage('sendAudio')
-  handleSendAudio(@ConnectedSocket() client: Socket, @MessageBody() data: { roomId: string, audioBuffer: Buffer }): void {
-    this.server.to(data.roomId).emit('audioReceived', { audioBuffer: data.audioBuffer });
+  @SubscribeMessage('call')
+  handleCall(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: any,
+  ): void {
+    console.log('socket on call');
+    const calleeId = data.calleeId;
+    const rtcMessage = data.rtcMessage;
+
+    client.to(calleeId).emit('newCall', {
+      callerId: client.id,
+      rtcMessage: rtcMessage,
+    });
+  }
+
+  @SubscribeMessage('answerCall')
+  handleAnswerCall(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: any,
+  ): void {
+    console.log('socket on answer call');
+    const callerId = data.callerId;
+    const rtcMessage = data.rtcMessage;
+
+    client.to(callerId).emit('callAnswered', {
+      callee: client.id,
+      rtcMessage: rtcMessage,
+    });
+  }
+
+  @SubscribeMessage('ICEcandidate')
+  handleICECandidate(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: any,
+  ): void {
+    console.log('ICEcandidate data.calleeId', data.calleeId);
+    const calleeId = data.calleeId;
+    const rtcMessage = data.rtcMessage;
+
+    client.to(calleeId).emit('ICEcandidate', {
+      sender: client.id,
+      rtcMessage: rtcMessage,
+    });
   }
 }
