@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
@@ -7,8 +8,16 @@ import { TranslationModule } from './translation/translation.module';
 import { AuthModule } from './auth/auth.module';
 import { CoreModule } from './core/core.module';
 
+
 @Module({
-  imports: [UsersModule, VoiceHandlingModule, TranslationModule, AuthModule, CoreModule],
+  imports: [
+    MongooseModule.forRoot('mongodb://localhost/samasyaSamadhaan'), // Simplified MongoDB connection setup
+    UsersModule,
+    VoiceHandlingModule,
+    TranslationModule,
+    AuthModule,
+    CoreModule
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
