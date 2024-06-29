@@ -14,7 +14,7 @@ import { ConfigModule } from '@nestjs/config';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     MongooseModule.forRoot(process.env.MONGO_URL, {
-      dbName: 'SwarSetu',
+      dbName: process.env.DB_NAME,
     }),
 
     VoiceHandlingModule,
