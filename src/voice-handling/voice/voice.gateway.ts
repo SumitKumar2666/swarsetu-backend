@@ -1,10 +1,16 @@
-import { WebSocketGateway, SubscribeMessage, WebSocketServer, OnGatewayConnection, OnGatewayDisconnect } from '@nestjs/websockets';
+import {
+  WebSocketGateway,
+  SubscribeMessage,
+  WebSocketServer,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+} from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 
 @WebSocketGateway({
   cors: {
-    origin: '*'
-  }
+    origin: '*',
+  },
 })
 export class VoiceGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server: Server;
