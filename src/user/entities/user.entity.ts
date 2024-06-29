@@ -11,8 +11,8 @@ export class User extends Document {
   @Prop({ type: String, required: true, unique: true })
   email: string;
 
-  @Prop({ type: Boolean, default: false, required: true })
-  password: boolean;
+  @Prop({ type: String, default: false, required: true })
+  password: string;
 
   @Prop({ type: Boolean, default: false })
   isSender: boolean;
