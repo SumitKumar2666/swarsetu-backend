@@ -6,9 +6,16 @@ import { CoreModule } from './core/core.module';
 import { TranslationModule } from './translation/translation.module';
 import { UserModule } from './user/user.module';
 import { VoiceHandlingModule } from './voice-handling/voice-handling.module';
+import { MongooseModule } from '@nestjs/mongoose';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    MongooseModule.forRoot(process.env.MONGO_URL, {
+      dbName: 'SwarSetu',
+    }),
+
     VoiceHandlingModule,
     TranslationModule,
     AuthModule,
