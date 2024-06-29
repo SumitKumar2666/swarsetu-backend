@@ -17,6 +17,7 @@ import { Server, Socket } from 'socket.io';
 @WebSocketGateway()
 export class VoiceGateway implements OnGatewayInit, OnGatewayConnection {
   @WebSocketServer() server: Server;
+  broadcaster: string;
 
   afterInit() {
     console.log('WebSocket initialized');
@@ -31,19 +32,23 @@ export class VoiceGateway implements OnGatewayInit, OnGatewayConnection {
     }
   }
 
-  @SubscribeMessage('call')
+  @SubscribeMessage('makeCall')
   handleCall(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: any,
   ): void {
-    console.log('socket on call');
-    const calleeId = data.calleeId;
-    const rtcMessage = data.rtcMessage;
+    try {
+      console.log('data', data);
+      const calleeId = data.calleeId;
+      const rtcMessage = data.rtcMessage;
 
-    client.to(calleeId).emit('newCall', {
-      callerId: client.id,
-      rtcMessage: rtcMessage,
-    });
+      client.to(calleeId).emit('newCall', {
+        callerId: client.id,
+        rtcMessage: rtcMessage,
+      });
+    } catch (error) {
+      console.log('error is makeCall', error);
+    }
   }
 
   @SubscribeMessage('answerCall')
@@ -66,7 +71,7 @@ export class VoiceGateway implements OnGatewayInit, OnGatewayConnection {
     @ConnectedSocket() client: Socket,
     @MessageBody() data: any,
   ): void {
-    console.log('ICEcandidate data.calleeId', data.calleeId);
+    console.log('ICEcandidate ', data);
     const calleeId = data.calleeId;
     const rtcMessage = data.rtcMessage;
 
@@ -74,5 +79,56 @@ export class VoiceGateway implements OnGatewayInit, OnGatewayConnection {
       sender: client.id,
       rtcMessage: rtcMessage,
     });
+  }
+
+  @SubscribeMessage('broadcaster')
+  handleBroadcaster(@ConnectedSocket() client: Socket): void {
+    this.broadcaster = client.id;
+    client.broadcast.emit('broadcaster');
+  }
+
+  @SubscribeMessage('watcher')
+  handleWatcher(@ConnectedSocket() client: Socket): void {
+    client.to(this.broadcaster).emit('watcher', client.id);
+  }
+  @SubscribeMessage('disconnect')
+  handleDisconnect(@ConnectedSocket() client: Socket): void {
+    client.to(this.broadcaster).emit('disconnectPeer', client.id);
+  }
+
+  @SubscribeMessage('offer')
+  handleOffer(
+    @ConnectedSocket() client: Socket,
+    id: string,
+    message: any,
+  ): void {
+    client.to(id).emit('offer', client.id, message);
+  }
+
+  @SubscribeMessage('answer')
+  handleAnswer(
+    @ConnectedSocket() client: Socket,
+    id: string,
+    message: any,
+  ): void {
+    client.to(id).emit('answer', client.id, message);
+  }
+
+  @SubscribeMessage('candidate')
+  handleCandidate(
+    @ConnectedSocket() client: Socket,
+    id: string,
+    message: any,
+  ): void {
+    client.to(id).emit('candidate', client.id, message);
+  }
+
+  @SubscribeMessage('comment')
+  handleComment(
+    @ConnectedSocket() client: Socket,
+    id: string,
+    message: any,
+  ): void {
+    client.to(id).emit('comment', client.id, message);
   }
 }
