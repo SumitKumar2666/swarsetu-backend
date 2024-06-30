@@ -6,8 +6,8 @@ export class TranslationService {
   private readonly CARTESIA_API_URL = process.env.CARTESIA_API_URL;
   private readonly CARTESIA_API_KEY = process.env.CARTESIA_API_KEY;
   private readonly OPENAI_API_URL = process.env.OPENAI_API_URL;
-  private readonly API_KEY = process.env.GOOGLE_API_KEY;
-  private readonly API_URL = 'https://speech.googleapis.com/v1/speech:recognize';
+  private readonly GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
+  private readonly GOOGLE_API_URL = process.env.GOOGLE_API_URL;
 
   async speechToText(audioBase64: string): Promise<string> {
     const config = {
@@ -26,7 +26,7 @@ export class TranslationService {
     };
 
     try {
-      const response = await axios.post(`${this.API_URL}?key=${this.API_KEY}`, data, {
+      const response = await axios.post(`${this.GOOGLE_API_URL}?key=${this.GOOGLE_API_KEY}`, data, {
         headers: {
           'Content-Type': 'application/json',
         },
@@ -96,7 +96,6 @@ export class TranslationService {
       const buffer = Buffer.from(response.data);
       const audioBase64 = buffer.toString('base64');
       return {audioBase64};
-      // return response.data;
     } catch (error) {
       console.error('Error processing text to speech:', error);
       throw new Error('Error processing text to speech');
