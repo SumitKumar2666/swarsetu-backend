@@ -6,17 +6,42 @@ export class TranslationService {
   private readonly CARTESIA_API_URL = process.env.CARTESIA_API_URL;
   private readonly CARTESIA_API_KEY = process.env.CARTESIA_API_KEY;
   private readonly OPENAI_API_URL = process.env.OPENAI_API_URL;
-  
+  private readonly API_KEY = process.env.GOOGLE_API_KEY;
+  private readonly API_URL = 'https://speech.googleapis.com/v1/speech:recognize';
+
   async speechToText(audioBase64: string): Promise<string> {
+    const config = {
+      encoding: 'LINEAR16',
+      sampleRateHertz: 16000,
+      languageCode: 'en-US',
+    };
+
+    const audio = {
+      content: audioBase64,
+    };
+
+    const data = {
+      config: config,
+      audio: audio,
+    };
+
     try {
-      const response = await axios.post(`${this.CARTESIA_API_URL}/speech-to-text`, { audio: audioBase64, language: "en-US" }, {
-        headers: { 'Authorization': `Bearer ${this.CARTESIA_API_KEY}`,'Content-Type': 'application/json' }
+      const response = await axios.post(`${this.API_URL}?key=${this.API_KEY}`, data, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
-      return response.data.text;
+
+      const transcription = response.data.results
+        .map(result => result.alternatives[0].transcript)
+        .join('\n');
+      return transcription;
     } catch (error) {
-      throw new BadRequestException('Error processing speech to text:', error);
+      console.error('Error in speechToText:', error.response?.data || error.message);
+      throw new BadRequestException('Error processing speech to text:', error.message);
     }
   }
+
 
   async translateText(sourceText: string, sourceLang: string, targetLang: string): Promise<object> {
     const data = {
@@ -44,7 +69,7 @@ export class TranslationService {
     }
   }
 
-  async textToSpeech(text: string): Promise<Buffer> {
+  async textToSpeech(text: string): Promise<object> {
     const data = {
       transcript: text,
       model_id: "sonic-english",
@@ -68,7 +93,10 @@ export class TranslationService {
         },
         responseType: 'arraybuffer'
       });
-      return response.data;
+      const buffer = Buffer.from(response.data);
+      const audioBase64 = buffer.toString('base64');
+      return {audioBase64};
+      // return response.data;
     } catch (error) {
       console.error('Error processing text to speech:', error);
       throw new Error('Error processing text to speech');
